@@ -62,6 +62,39 @@ class DoubleDQNAgent():
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         self.optimizer.step()
     
+    def optimize_robust_model(self, memory):
+        if len(memory) < BATCH_SIZE:
+            return
+        transitions = memory.sample(BATCH_SIZE)
+        batch = Transition(*zip(*transitions))
+
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                            batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state
+                                                    if s is not None])
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward)
+
+        state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+
+        next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        with torch.no_grad():
+            adversarial_non_final_next_states = self.adversary( state_batch[non_final_mask],
+                                                                non_final_next_states, 
+                                                                self.policy_net)
+            next_state_values[non_final_mask] = self.target_net(adversarial_non_final_next_states).max(1)[0]
+
+        expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
+        self.optimizer.step()
+
     # def optimize_model(self, memory):
     #     if len(memory) < BATCH_SIZE:
     #         return
