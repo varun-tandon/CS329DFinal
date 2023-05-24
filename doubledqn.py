@@ -29,6 +29,9 @@ class DoubleDQNAgent():
         else:
             return torch.tensor([[self.action_space.sample()]], device=device, dtype=torch.long)
     
+    def get_best_action(self, state):
+        return self.policy_net(state).max(1)[1].view(1, 1)
+
     def optimize_model(self, memory):
         if len(memory) < BATCH_SIZE:
             return
