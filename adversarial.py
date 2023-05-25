@@ -67,39 +67,6 @@ class AdversarialAgent():
 		x, x_dot, theta, theta_dot = state[:,0], state[:,1], state[:,2], state[:,3]
 		return torch.exp(-torch.abs(theta))
 
-	# def adversary(current_state_batch, next_state_batch, Q_net):
-	# 	"""
-	# 	returns adversarial example
-	# 	"""
-
-	# 	batch_size, state_dim = current_state_batch.shape
-	# 	adverarial_next_state_list = []
-
-	# 	for i in range(batch_size):
-	# 		prior_state = current_state_batch[i]
-	# 		next_state    = next_state_batch[i]
-
-	# 		adversarial_state = ...
-
-	# 		ADV_ITER = 1000
-	# 		for t in range(ADV_ITER):
-	# 			action_values = Q_net(adversarial_state)
-	# 			payoff_action_0 = self.reward(prior_state, 0) + GAMMA*action_values[0]
-	# 			payoff_action_1 = self.reward(prior_state, 1) + GAMMA*action_values[1]
-
-	# 			loss = torch.max(payoff_action_0, payoff_action_1) \
-	# 				   + GAMMA_ADV*torch.linalg.vector_norm(adversarial_state - prior_state)
-
-	# 			# update on adversarial state
-
-	# 		adverarial_next_state_list.append(adversarial_state)
-
-
-	# 	adversarial_state_batch = torch.cat(adverarial_next_state_list)
-
-	# 	return adversarial_state_batch
-
-
 	def example(self, next_state_batch, Q_net):
 		"""
 		returns adversarial example
@@ -112,7 +79,7 @@ class AdversarialAgent():
 
 		optimizer = optim.AdamW([adversarial_state_batch], lr=LR, amsgrad=True)
 
-		ADV_ITER = 5000
+		ADV_ITER = 1500
 		for t in range(ADV_ITER):
 			action_values = Q_net(adversarial_state_batch)
 
