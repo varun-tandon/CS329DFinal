@@ -6,7 +6,7 @@ import torch.optim as optim
 import torch.nn as nn
 
 from network import DQN
-from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA
+from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA, SHOULD_GENERATE_ADV, ADV_GAMMA
 
 
 class DoubleDQNAgent():
@@ -31,6 +31,9 @@ class DoubleDQNAgent():
     
     def get_best_action(self, state):
         return self.policy_net(state).max(1)[1].view(1, 1)
+    
+    def differentiable_reward(state):
+        return 
 
     def optimize_model(self, memory):
         if len(memory) < BATCH_SIZE:
@@ -43,6 +46,25 @@ class DoubleDQNAgent():
         non_final_next_states = torch.cat([s for s in batch.next_state
                                                     if s is not None])
         state_batch = torch.cat(batch.state)
+        if SHOULD_GENERATE_ADV:
+            adversarial_state = torch.clone(state_batch)
+            adversarial_state.require_grad = True
+            adv_optim = optim.Adam([adversarial_state], lr=1e-3)
+            self.policy_net.eval()
+            for i in range(100):
+                reward = torch.exp(adversarial_state[:, 2])
+                cost = torch.norm(adversarial_state - state_batch, p=2)
+                maxQ = self.policy_net(adversarial_state).max(1)[0]
+                loss = reward + ADV_GAMMA * cost + GAMMA * maxQ
+                for j in range(len(loss)):
+                    adv_optim.zero_grad()
+                    loss[j].backward(retain_graph=True)
+                    adv_optim.step()
+
+            self.policy_net.train()
+            state_batch = adversarial_state
+
+            
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
 
