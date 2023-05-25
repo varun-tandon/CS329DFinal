@@ -7,7 +7,7 @@ import torch.nn as nn
 
 from network import DQN
 from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA
-
+from adversarial import AdversarialAgent
 
 class DoubleDQNAgent():
     def __init__(self, n_observations, n_actions, action_space):
@@ -17,6 +17,8 @@ class DoubleDQNAgent():
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=LR, amsgrad=True)
         self.action_space = action_space
         self.steps_done = 0
+
+        self.adversary = AdversarialAgent()
 
     def act(self, state):
         sample = random.random()
@@ -63,6 +65,7 @@ class DoubleDQNAgent():
         self.optimizer.step()
     
     def optimize_robust_model(self, memory):
+
         if len(memory) < BATCH_SIZE:
             return
         transitions = memory.sample(BATCH_SIZE)
@@ -79,10 +82,8 @@ class DoubleDQNAgent():
         state_action_values = self.policy_net(state_batch).gather(1, action_batch)
 
         next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        adversarial_non_final_next_states = self.adversary.example(non_final_next_states, self.policy_net)
         with torch.no_grad():
-            adversarial_non_final_next_states = self.adversary( state_batch[non_final_mask],
-                                                                non_final_next_states, 
-                                                                self.policy_net)
             next_state_values[non_final_mask] = self.target_net(adversarial_non_final_next_states).max(1)[0]
 
         expected_state_action_values = (next_state_values * GAMMA) + reward_batch
