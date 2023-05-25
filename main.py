@@ -49,8 +49,8 @@ for i_episode in range(NUM_EPISODES):
 
         state = next_state
 
-        # agent.optimize_model(memory)
-        agent.optimize_robust_model(memory)
+        agent.optimize_model(memory)
+        #agent.optimize_robust_model(memory)
         agent.update_target_network_weights()
 
         if done:

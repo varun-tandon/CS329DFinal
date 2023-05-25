@@ -74,17 +74,17 @@ class AdversarialAgent():
 
 		batch_size, state_dim = next_state_batch.shape
 
-		adversarial_state_batch = next_state_batch.detach().clone() + 0.1*torch.randn_like(next_state_batch)
+		adversarial_state_batch = next_state_batch.detach().clone() #+ 0.1*torch.randn_like(next_state_batch)
 		adversarial_state_batch.requires_grad_()
 
-		optimizer = optim.AdamW([adversarial_state_batch], lr=LR, amsgrad=True)
+		optimizer = optim.AdamW([adversarial_state_batch], lr=0.01, amsgrad=True)
 
-		ADV_ITER = 1500
+		ADV_ITER = 50
 		for t in range(ADV_ITER):
 			action_values = Q_net(adversarial_state_batch)
 
-			# payoff_action_0 = self.reward(adversarial_state_batch, 0) + GAMMA*action_values[:,0]
-			# payoff_action_1 = self.reward(adversarial_state_batch, 1) + GAMMA*action_values[:,1]
+			#payoff_action_0 = self.reward(adversarial_state_batch, 0) + GAMMA*action_values[:,0]
+			#payoff_action_1 = self.reward(adversarial_state_batch, 1) + GAMMA*action_values[:,1]
 
 			payoff_action_0 = self.reward_paper(adversarial_state_batch, 0) + GAMMA*action_values[:,0]
 			payoff_action_1 = self.reward_paper(adversarial_state_batch, 1) + GAMMA*action_values[:,1]
@@ -92,16 +92,16 @@ class AdversarialAgent():
 			loss = torch.mean(torch.maximum(payoff_action_0, payoff_action_1)) \
 				   + GAMMA_ADV*torch.linalg.vector_norm(adversarial_state_batch - next_state_batch)			
 			
-			if t % 100 == 0:
-				print(loss)
-			loss.backward()
-			optimizer.step()
-			optimizer.zero_grad()
+			#if t % 100 == 0:
+			#print(loss)
+			#loss.backward()
+			#optimizer.step()
+			#optimizer.zero_grad()
 
-		print(next_state_batch[0])
-		print(adversarial_state_batch[0])
-		print(torch.linalg.vector_norm(adversarial_state_batch - next_state_batch))
-		exit()
+		#print(next_state_batch[0])
+		#print(adversarial_state_batch[0])
+		#print(torch.linalg.vector_norm(adversarial_state_batch - next_state_batch))
+		#exit()
 
 		return adversarial_state_batch.detach()
 
