@@ -6,7 +6,12 @@ import torch.optim as optim
 import torch.nn as nn
 
 from network import DQN
+from tqdm import tqdm
 from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA, SHOULD_GENERATE_ADV, ADV_GAMMA
+
+# fix a random state
+random.seed(0)
+torch.manual_seed(0)
 
 
 class DoubleDQNAgent():
@@ -47,19 +52,22 @@ class DoubleDQNAgent():
                                                     if s is not None])
         state_batch = torch.cat(batch.state)
         if SHOULD_GENERATE_ADV:
-            adversarial_state = torch.clone(state_batch)
-            adversarial_state.require_grad = True
-            adv_optim = optim.Adam([adversarial_state], lr=1e-3)
+            adversarial_state = torch.clone(state_batch).detach().requires_grad_(True)
+            adv_optim = optim.Adam([adversarial_state], lr=1e-1)
             self.policy_net.eval()
-            for i in range(100):
-                reward = torch.exp(adversarial_state[:, 2])
+            prev_loss = 0
+            while True:
+                reward = torch.exp(-torch.abs(torch.clamp(adversarial_state[:, 2], -0.418, 0.418)))
                 cost = torch.norm(adversarial_state - state_batch, p=2)
-                maxQ = self.policy_net(adversarial_state).max(1)[0]
+                maxQ = torch.clamp(self.policy_net(adversarial_state).max(1)[0], 0, 1)
                 loss = reward + ADV_GAMMA * cost + GAMMA * maxQ
-                for j in range(len(loss)):
-                    adv_optim.zero_grad()
-                    loss[j].backward(retain_graph=True)
-                    adv_optim.step()
+                loss = loss.mean()
+                if torch.abs(loss - prev_loss) < 1e-2:
+                    break
+                prev_loss = loss
+                adv_optim.zero_grad()
+                loss.backward()
+                adv_optim.step()
 
             self.policy_net.train()
             state_batch = adversarial_state
