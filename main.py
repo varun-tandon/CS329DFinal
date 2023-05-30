@@ -4,6 +4,7 @@ from collections import deque, namedtuple
 from itertools import count
 
 import gymnasium as gym
+import custom_envs
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
@@ -16,11 +17,10 @@ from plots import plot_durations
 from replaymemory import ReplayMemory
 from shared import device, NUM_EPISODES, SHOULD_PLOT
 
-env = gym.make("CartPole-v1")
+env = gym.make("custom_envs/CartPole-v1")
 
 if SHOULD_PLOT:
     plt.ion()
-
 
 n_actions = env.action_space.n
 state, info = env.reset()

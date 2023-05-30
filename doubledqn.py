@@ -33,6 +33,9 @@ class DoubleDQNAgent():
     
     def get_best_action(self, state):
         return self.policy_net(state).max(1)[1].view(1, 1)
+    
+    def differentiable_reward(state):
+        return 
 
     def optimize_model(self, memory):
         if len(memory) < BATCH_SIZE:
@@ -45,6 +48,28 @@ class DoubleDQNAgent():
         non_final_next_states = torch.cat([s for s in batch.next_state
                                                     if s is not None])
         state_batch = torch.cat(batch.state)
+        if SHOULD_GENERATE_ADV:
+            adversarial_state = torch.clone(state_batch).detach().requires_grad_(True)
+            adv_optim = optim.Adam([adversarial_state], lr=1e-1)
+            self.policy_net.eval()
+            prev_loss = 0
+            while True:
+                reward = torch.exp(-torch.abs(torch.clamp(adversarial_state[:, 2], -0.418, 0.418)))
+                cost = torch.norm(adversarial_state - state_batch, p=2)
+                maxQ = torch.clamp(self.policy_net(adversarial_state).max(1)[0], 0, 1)
+                loss = reward + ADV_GAMMA * cost + GAMMA * maxQ
+                loss = loss.mean()
+                if torch.abs(loss - prev_loss) < 1e-2:
+                    break
+                prev_loss = loss
+                adv_optim.zero_grad()
+                loss.backward()
+                adv_optim.step()
+
+            self.policy_net.train()
+            state_batch = adversarial_state
+
+            
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
 

@@ -1,7 +1,9 @@
 from collections import namedtuple
 import torch
 
-SHOULD_PLOT = False
+SHOULD_PLOT = True
+SHOULD_GENERATE_ADV = False 
+ADV_GAMMA = 1
 BATCH_SIZE = 64
 GAMMA = 0.99
 EPS_START = 0.9
