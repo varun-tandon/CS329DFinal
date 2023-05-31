@@ -11,24 +11,28 @@ from shared import device, TEST_HARNESS_NUM_EPISODES
 
 env_name = 'custom_envs/CartPole-v1'
 
-gravity_sweep = np.linspace(0.5, 20.0, 5)
-gravity_sweep[2] = 9.8
-gravity_sweep = list(gravity_sweep)
+# gravity_sweep = np.linspace(0.5, 20.0, 5)
+# gravity_sweep[2] = 9.8
+# gravity_sweep = list(gravity_sweep)
+gravity_sweep = [9.8 / 5, 9.8, 9.8 * 5]
 
 # try masses from 0.1 to 2.0 in increments of 0.1
-masscart_sweep = np.linspace(0.1, 2.0, 5)
-masscart_sweep[2] = 1.0
-masscart_sweep = list(masscart_sweep)
+# masscart_sweep = np.linspace(0.1, 2.0, 5)
+# masscart_sweep[2] = 1.0
+# masscart_sweep = list(masscart_sweep)
+masscart_sweep = [1.0 / 2, 1.0, 1.0 * 2]
 
 # try masses from 0.01 to 0.2 in increments of 0.01
-masspole_sweep = np.linspace(0.01, 0.2, 5)
-masspole_sweep[2] = 0.1
-masspole_sweep = list(masspole_sweep)
+# masspole_sweep = np.linspace(0.01, 0.2, 5)
+# masspole_sweep[2] = 0.1
+# masspole_sweep = list(masspole_sweep)
+masspole_sweep = [0.1 / 2, 0.1, 0.1 * 2]
 
 # try lengths from 0.1 to 2.0 in increments of 0.1
-length_sweep = np.linspace(0.1, 1.0, 5)
-length_sweep[2] = 0.5
-length_sweep = list(length_sweep)
+# length_sweep = np.linspace(0.1, 1.0, 5)
+# length_sweep[2] = 0.5
+# length_sweep = list(length_sweep)
+length_sweep = [0.5 / 2, 0.5, 0.5 * 2]
 
 results = dict()
 
@@ -79,5 +83,5 @@ for gravity, masscart, masspole, length in tqdm(all_combinations):
     print(f'gravity={gravity}, masscart={masscart}, masspole={masspole}, length={length}, mean={mean}, std={std}')
     env.close()
 
-json.dump(results, open('results.json', 'w'))
+json.dump(results, open('results_paper.json', 'w'))
 

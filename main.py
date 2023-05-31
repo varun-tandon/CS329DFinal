@@ -16,7 +16,7 @@ import torch.optim as optim
 from doubledqn import DoubleDQNAgent
 from plots import plot_durations
 from replaymemory import ReplayMemory
-from shared import device, NUM_EPISODES, SHOULD_PLOT
+from shared import device, NUM_EPISODES, SHOULD_PLOT, SHOULD_GENERATE_ADV
 from tqdm import tqdm
 
 convergence_times = []
@@ -80,5 +80,5 @@ for _ in tqdm(range(20)):
         plt.ioff()
     print(convergence_times)
     # save the model
-    torch.save(agent.policy_net.state_dict(), f"models/{env_name}-{i_episode}-episodes-{time.time()}.pth")
+    torch.save(agent.policy_net.state_dict(), f"models/{env_name}-{'ADV' if SHOULD_GENERATE_ADV else 'NOADV'}-{i_episode}-episodes-{time.time()}.pth")
 print(convergence_times)
