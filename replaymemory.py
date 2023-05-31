@@ -14,3 +14,6 @@ class ReplayMemory(object):
 
     def __len__(self):
         return len(self.memory)
+
+    def get_last(self):
+        return self.memory[-1]
