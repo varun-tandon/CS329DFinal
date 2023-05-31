@@ -6,7 +6,7 @@ import torch.optim as optim
 import torch.nn as nn
 
 from network import DQN
-from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA
+from shared import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, LR, device, TAU, Transition, GAMMA, SHOULD_GENERATE_ADV, GAMMA_ADV 
 from adversarial import AdversarialAgent
 
 class DoubleDQNAgent():
@@ -17,6 +17,7 @@ class DoubleDQNAgent():
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=LR, amsgrad=True)
         self.action_space = action_space
         self.steps_done = 0
+        self.should_explore = True
 
         self.adversary = AdversarialAgent()
 
@@ -25,7 +26,7 @@ class DoubleDQNAgent():
         eps_threshold = EPS_END + (EPS_START - EPS_END) * \
             math.exp(-1. * self.steps_done / EPS_DECAY)
         self.steps_done += 1
-        if sample > eps_threshold:
+        if sample > eps_threshold or not self.should_explore:
             with torch.no_grad():
                 return self.policy_net(state).max(1)[1].view(1, 1)
         else:
@@ -36,6 +37,12 @@ class DoubleDQNAgent():
     
     def differentiable_reward(state):
         return 
+
+    def load_model(self, path):
+        self.policy_net.load_state_dict(torch.load(path))
+    
+    def disable_exploration(self):
+        self.should_explore = False
 
     def optimize_model(self, memory):
         if len(memory) < BATCH_SIZE:
@@ -53,13 +60,16 @@ class DoubleDQNAgent():
             adv_optim = optim.Adam([adversarial_state], lr=1e-1)
             self.policy_net.eval()
             prev_loss = 0
+            n_iter = 0
             while True:
+                n_iter += 1
                 reward = torch.exp(-torch.abs(torch.clamp(adversarial_state[:, 2], -0.418, 0.418)))
                 cost = torch.norm(adversarial_state - state_batch, p=2)
                 maxQ = torch.clamp(self.policy_net(adversarial_state).max(1)[0], 0, 1)
-                loss = reward + ADV_GAMMA * cost + GAMMA * maxQ
+                loss = reward + GAMMA_ADV * cost + GAMMA * maxQ
                 loss = loss.mean()
-                if torch.abs(loss - prev_loss) < 1e-2:
+                if torch.abs(loss - prev_loss) < 1e-3:
+                    # print("Converged in {} iterations".format(n_iter))
                     break
                 prev_loss = loss
                 adv_optim.zero_grad()
