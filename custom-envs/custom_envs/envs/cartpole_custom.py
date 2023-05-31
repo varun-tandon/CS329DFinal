@@ -88,16 +88,21 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 50,
     }
 
-    def __init__(self, render_mode: Optional[str] = None):
-        self.gravity = 9.8
-        self.masscart = 1.0
-        self.masspole = 0.1
+    def __init__(self, render_mode: Optional[str] = None, options=None):
+        self.gravity = 9.8 if options is None or "gravity" not in options else options["gravity"]
+        self.masscart = 1.0 if options is None or "masscart" not in options else options["masscart"]
+        self.masspole = 0.1 if options is None or "masspole" not in options else options["masspole"]
         self.total_mass = self.masspole + self.masscart
-        self.length = 0.5  # actually half the pole's length
+        self.length = 0.5 if options is None or "length" not in options else options["length"]
         self.polemass_length = self.masspole * self.length
-        self.force_mag = 10.0
+        self.force_mag = 10.0 if options is None or "force_mag" not in options else options["force_mag"]
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = "euler"
+
+        print("Gravity: ", self.gravity)
+        print("Masscart: ", self.masscart)
+        print("Masspole: ", self.masspole)
+        print("Length: ", self.length)
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360

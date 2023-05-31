@@ -1,17 +1,20 @@
 from collections import namedtuple
 import torch
 
-SHOULD_PLOT = True
+SHOULD_PLOT = True 
 SHOULD_GENERATE_ADV = False 
-ADV_GAMMA = 1
-BATCH_SIZE = 64
+ADV_GAMMA = 1 
+BATCH_SIZE = 64 
 GAMMA = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
-EPS_DECAY = 1000
+EPS_DECAY = 500
 TAU = 0.005
-LR = 5e-5
+LR = 1e-4
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-NUM_EPISODES = 600
+NUM_EPISODES = 1000 
+
+# Test Harness Parameters
+TEST_HARNESS_NUM_EPISODES = 30
