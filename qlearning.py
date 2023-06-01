@@ -78,7 +78,7 @@ class QLearningAgent:
                 loss.backward()
                 adv_optim.step()
                 n_iter += 1
-            state = adversarial_state.detach()
+            next_state = adversarial_state.detach()
         next_angle_idx, next_angle_vel_idx = self.discretize(next_state[0])
         max_Q = np.max(self.Q[next_angle_idx][next_angle_vel_idx])
         prev_Q = self.Q[angle_idx][angle_vel_idx][action]
