@@ -4,10 +4,11 @@ import custom_envs
 import json
 from tqdm import tqdm
 from doubledqn import DoubleDQNAgent
+from qlearning import QLearningAgent
 from replaymemory import ReplayMemory
 from itertools import count
 import torch
-from shared import device, TEST_HARNESS_NUM_EPISODES
+from shared import device, TEST_HARNESS_NUM_EPISODES, SELECTED_AGENT
 
 env_name = 'custom_envs/CartPole-v1'
 
@@ -59,8 +60,11 @@ for gravity, masscart, masspole, length in tqdm(all_combinations):
         state, info = env.reset()
         n_observations = len(state)
     
-        agent = DoubleDQNAgent(n_observations, n_actions, env.action_space)
-        agent.load_model('models\\CartPole-v1-232-episodes-1685491412.3060522.pth')
+        if SELECTED_AGENT == 'tabular':
+            agent = QLearningAgent(n_observations, n_actions, env.action_space)
+        elif SELECTED_AGENT == 'dqn':
+            agent = DoubleDQNAgent(n_observations, n_actions, env.action_space)
+        agent.load('models/CartPole-v1-tabular-ADV-550-episodes-1685578796.9757571')
         agent.disable_exploration()
         
         for t in count():
@@ -83,5 +87,5 @@ for gravity, masscart, masspole, length in tqdm(all_combinations):
     print(f'gravity={gravity}, masscart={masscart}, masspole={masspole}, length={length}, mean={mean}, std={std}')
     env.close()
 
-json.dump(results, open('results_paper.json', 'w'))
+json.dump(results, open('results_tabular_paper_adv.json', 'w'))
 

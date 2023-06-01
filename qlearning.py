@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+from shared import SHOULD_GENERATE_ADV, GAMMA_ADV
 
 class QLearningAgent:
     def __init__(self, n_observations, n_actions, action_space):
@@ -7,7 +9,7 @@ class QLearningAgent:
         self.action_space = action_space
         self.N_BUCKETS_ANGLE = 30
         self.N_BUCKETS_ANGLE_VEL = 15 
-        self.disable_exploration = False
+        self.is_exploration_disabled = False
 
         self.Q = np.zeros((self.N_BUCKETS_ANGLE, self.N_BUCKETS_ANGLE_VEL, self.n_actions))
         self.alpha = 0.3
@@ -44,13 +46,13 @@ class QLearningAgent:
 
     def act(self, state):
         angle_idx, angle_vel_idx = self.discretize(state[0])
-        if np.random.random() < self.epsilon and not self.disable_exploration:
+        if np.random.random() < self.epsilon and not self.is_exploration_disabled:
             return self.action_space.sample()
         else:
             return np.argmax(self.Q[angle_idx][angle_vel_idx])
 
     def disable_exploration(self):
-        self.disable_exploration = True
+        self.is_exploration_disabled = True
 
     def optimize_model(self, memory):
         state, action, next_state, reward = memory.get_last()
@@ -59,6 +61,24 @@ class QLearningAgent:
             self.alpha *= self.alpha_decay
             return 
         angle_idx, angle_vel_idx = self.discretize(state[0])
+        if SHOULD_GENERATE_ADV:
+            adversarial_state = torch.clone(state).detach().requires_grad_(True)
+            adv_optim = torch.optim.Adam([adversarial_state], lr=1e-3)
+            prev_loss = 0
+            n_iter = 0
+            while True:
+                reward = torch.exp(-torch.abs(adversarial_state[0][2]))
+                cost = torch.norm(adversarial_state - state, p=2)
+                loss = reward + GAMMA_ADV * cost
+                if torch.abs(loss - prev_loss) < 1e-5:
+                    print("Converged in {} iterations".format(n_iter))
+                    break
+                prev_loss = loss
+                adv_optim.zero_grad()
+                loss.backward()
+                adv_optim.step()
+                n_iter += 1
+            state = adversarial_state.detach()
         next_angle_idx, next_angle_vel_idx = self.discretize(next_state[0])
         max_Q = np.max(self.Q[next_angle_idx][next_angle_vel_idx])
         prev_Q = self.Q[angle_idx][angle_vel_idx][action]

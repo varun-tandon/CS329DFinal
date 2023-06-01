@@ -66,10 +66,12 @@ for _ in tqdm(range(20)):
                 episode_durations.append(t + 1)
                 print(f"Episode {i_episode} finished after {t+1} timesteps")
                 if episode_durations[-1] == 500:
-                    if agent.epsilon > 0.01:
-                        agent.epsilon = 0.01
-                    if agent.alpha > 0.05:
-                        agent.alpha = 0.05
+                    if agent.epsilon > 0.05:
+                        agent.epsilon = 0.05
+                        agent.epsilon_decay = 1
+                    if agent.alpha > 0.1:
+                        agent.alpha = 0.1
+                        agent.alpha_decay = 1
                 # if the last 3 episodes have been at 500 timesteps, we have converged
                 if len(episode_durations) >= 20 and all([x == 500 for x in episode_durations[-20:]]):
                     print("Converged!")
