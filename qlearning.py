@@ -10,6 +10,7 @@ class QLearningAgent:
         self.N_BUCKETS_ANGLE = 30
         self.N_BUCKETS_ANGLE_VEL = 15 
         self.is_exploration_disabled = False
+        self.n_episodes = 0
 
         self.Q = np.zeros((self.N_BUCKETS_ANGLE, self.N_BUCKETS_ANGLE_VEL, self.n_actions))
         self.alpha = 0.3
@@ -17,7 +18,7 @@ class QLearningAgent:
         self.gamma = 0.95
         self.epsilon = 1
         self.epsilon_decay = 0.995
-    
+
     def discretize(self, obs):
         # our observation is a 4-tuple of floats: (x, x_dot, theta, theta_dot)
         # we only care about the angle (theta) and angular velocity (theta_dot)
@@ -56,22 +57,26 @@ class QLearningAgent:
 
     def optimize_model(self, memory):
         state, action, next_state, reward = memory.get_last()
+        print(self.Q.max())
         if next_state is None:
-            self.epsilon *= self.epsilon_decay
-            self.alpha *= self.alpha_decay
+            self.n_episodes += 1
+            if self.n_episodes > 100 and self.n_episodes % 1 == 0:
+                self.epsilon *= self.epsilon_decay
+                self.alpha *= self.alpha_decay
+                print("epsilon: ", self.epsilon)
+                print("alpha: ", self.alpha)
             return 
         angle_idx, angle_vel_idx = self.discretize(state[0])
         if SHOULD_GENERATE_ADV:
             adversarial_state = torch.clone(state).detach().requires_grad_(True)
-            adv_optim = torch.optim.Adam([adversarial_state], lr=1e-3)
+            adv_optim = torch.optim.Adam([adversarial_state], lr=1e-4)
             prev_loss = 0
             n_iter = 0
             while True:
                 reward = torch.exp(-torch.abs(adversarial_state[0][2]))
-                cost = torch.norm(adversarial_state - state, p=2)
+                cost = torch.norm(adversarial_state - next_state, p=2)
                 loss = reward + GAMMA_ADV * cost
                 if torch.abs(loss - prev_loss) < 1e-5:
-                    print("Converged in {} iterations".format(n_iter))
                     break
                 prev_loss = loss
                 adv_optim.zero_grad()
