@@ -12,11 +12,12 @@ class QLearningAgent:
         self.is_exploration_disabled = False
 
         self.Q = np.zeros((self.N_BUCKETS_ANGLE, self.N_BUCKETS_ANGLE_VEL, self.n_actions))
-        self.alpha = 0.3
+        self.alpha = 0.7
         self.alpha_decay = 0.9995
         self.gamma = 0.95
         self.epsilon = 1
         self.epsilon_decay = 0.995
+        self.n_iter = 0
     
     def discretize(self, obs):
         # our observation is a 4-tuple of floats: (x, x_dot, theta, theta_dot)
@@ -59,19 +60,23 @@ class QLearningAgent:
         if next_state is None:
             self.epsilon *= self.epsilon_decay
             self.alpha *= self.alpha_decay
+            print("Epsilon: {}, Alpha: {}".format(self.epsilon, self.alpha))
+            self.n_iter += 1
             return 
         angle_idx, angle_vel_idx = self.discretize(state[0])
-        if SHOULD_GENERATE_ADV:
+        original_next_angle_idx, original_next_angle_vel_idx = self.discretize(next_state[0])
+        if SHOULD_GENERATE_ADV and self.n_iter % 1 == 0:
             adversarial_state = torch.clone(state).detach().requires_grad_(True)
-            adv_optim = torch.optim.Adam([adversarial_state], lr=1e-3)
+            adv_optim = torch.optim.Adam([adversarial_state], lr=1e-2)
             prev_loss = 0
             n_iter = 0
             while True:
-                reward = torch.exp(-torch.abs(adversarial_state[0][2]))
-                cost = torch.norm(adversarial_state - state, p=2)
-                loss = reward + GAMMA_ADV * cost
-                if torch.abs(loss - prev_loss) < 1e-5:
-                    print("Converged in {} iterations".format(n_iter))
+                reward_adv = torch.exp(-torch.abs(adversarial_state[0][2]))
+                reward_next_state = torch.exp(-torch.abs(next_state[0][2]))
+                cost = torch.norm(adversarial_state - next_state, p=2)
+                loss = reward_adv + GAMMA_ADV * cost
+                if torch.abs(loss - prev_loss) < 1e-3:
+                    # print("Converged in {} iterations".format(n_iter))
                     break
                 prev_loss = loss
                 adv_optim.zero_grad()
@@ -80,6 +85,7 @@ class QLearningAgent:
                 n_iter += 1
             next_state = adversarial_state.detach()
         next_angle_idx, next_angle_vel_idx = self.discretize(next_state[0])
+        # print(original_next_angle_idx, original_next_angle_vel_idx, next_angle_idx, next_angle_vel_idx)
         max_Q = np.max(self.Q[next_angle_idx][next_angle_vel_idx])
         prev_Q = self.Q[angle_idx][angle_vel_idx][action]
         self.Q[angle_idx][angle_vel_idx][action] += self.alpha * (reward + self.gamma * max_Q - prev_Q) 

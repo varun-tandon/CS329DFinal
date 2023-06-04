@@ -2,8 +2,8 @@ from collections import namedtuple
 import torch
 
 SHOULD_PLOT = True 
-SHOULD_GENERATE_ADV = True 
-GAMMA_ADV = 1 
+SHOULD_GENERATE_ADV = True
+GAMMA_ADV = 1.3
 BATCH_SIZE = 64 
 GAMMA = 0.99
 EPS_START = 0.9
@@ -18,4 +18,4 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NUM_EPISODES = 10000
 
 # Test Harness Parameters
-TEST_HARNESS_NUM_EPISODES = 30
+TEST_HARNESS_NUM_EPISODES = 100

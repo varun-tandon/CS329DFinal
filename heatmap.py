@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 # Load the data
-with open('results_tabular_paper_adv.json', 'r') as f:
+with open('results_tabular_paper.json', 'r') as f:
     data = json.load(f)
 # Unique values for the parameters
 gravities = sorted(set(float(k.split(',')[0]) for k in data.keys()))
@@ -35,7 +35,7 @@ for i, cart_mass in enumerate(cart_masses):
                 # Store the confidence interval in the separate dictionary
                 ci_data.append(ci)
         # Create the heatmap
-        heatmap = sns.heatmap(df.astype(float), ax=ax, annot=True, fmt=".1f", cmap='RdYlGn')
+        heatmap = sns.heatmap(df.astype(float), ax=ax, annot=True, fmt=".1f", cmap='RdYlGn', vmin=0, vmax=500)
         heatmap.set_xlabel("Gravity")
         heatmap.set_ylabel("Pole Length")
         text_i = 0
@@ -45,4 +45,4 @@ for i, cart_mass in enumerate(cart_masses):
         ax.set_title(f"Cart Mass: {cart_mass}, Pole Mass {pole_mass}")
 
 plt.tight_layout()
-plt.savefig("heatmap_og_adv_tabular.png", dpi=300)
+plt.savefig("heatmap_og_nonadv_tabular.png", dpi=300)
