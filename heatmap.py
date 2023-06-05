@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 # Load the data
-with open('results_tabular_paper.json', 'r') as f:
+with open('results_tabular_paper_noadv_20.json', 'r') as f:
     data = json.load(f)
 # Unique values for the parameters
 gravities = sorted(set(float(k.split(',')[0]) for k in data.keys()))
@@ -45,4 +45,4 @@ for i, cart_mass in enumerate(cart_masses):
         ax.set_title(f"Cart Mass: {cart_mass}, Pole Mass {pole_mass}")
 
 plt.tight_layout()
-plt.savefig("heatmap_og_nonadv_tabular.png", dpi=300)
+plt.savefig("heatmap_og_noadv_tabular_20.png", dpi=300)

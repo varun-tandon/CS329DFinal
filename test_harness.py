@@ -64,7 +64,7 @@ for gravity, masscart, masspole, length in tqdm(all_combinations):
             agent = QLearningAgent(n_observations, n_actions, env.action_space)
         elif SELECTED_AGENT == 'dqn':
             agent = DoubleDQNAgent(n_observations, n_actions, env.action_space)
-        agent.load('models/CartPole-v1-tabular-NOADV-301-episodes-1685845293.703359')
+        agent.load('models/CartPole-v1-tabular-NOADV-384-episodes-1685922530.190449')
         agent.disable_exploration()
         
         for t in count():
@@ -87,5 +87,5 @@ for gravity, masscart, masspole, length in tqdm(all_combinations):
     print(f'gravity={gravity}, masscart={masscart}, masspole={masspole}, length={length}, mean={mean}, std={std}')
     env.close()
 
-json.dump(results, open('results_tabular_paper.json', 'w'))
+json.dump(results, open('results_tabular_paper_noadv_20.json', 'w'))
 

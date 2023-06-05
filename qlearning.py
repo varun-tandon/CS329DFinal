@@ -12,7 +12,7 @@ class QLearningAgent:
         self.is_exploration_disabled = False
 
         self.Q = np.zeros((self.N_BUCKETS_ANGLE, self.N_BUCKETS_ANGLE_VEL, self.n_actions))
-        self.alpha = 0.7
+        self.alpha = 0.5
         self.alpha_decay = 0.9995
         self.gamma = 0.95
         self.epsilon = 1
